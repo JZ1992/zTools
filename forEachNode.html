@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>遍历dom节点</title>
+    <script src="zTools.js"></script>
+</head>
+<body>
+    <div class="root">
+        <div class="son1">
+            <div class="son1-1"></div>
+            <div class="son1-2"></div>
+        </div>
+        <div class="son2">
+            <div class="son2-3"></div>
+        </div>
+    </div>
+    <script>
+        function nodeTip(node){
+            console.log(node.classList);
+        }
+        var rootNode = document.body;
+        zTools.GoThroughDom(rootNode, nodeTip);
+    </script>
+</body>
+</html>
