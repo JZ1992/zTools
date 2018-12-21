@@ -534,9 +534,6 @@
   }
   //zTools.GoThroughDom(document.body, function(node){console.log(node.localName);})
 
-
-
-
   /**
    * 文本标注
    */
@@ -549,16 +546,30 @@
     this.exclude = config.exclude;
     //当前选区是否容器内
     this.currentSelectionIsIn = false;
+    //鼠标右键功能区
+    this.menuBox = null;
   }
   //获取当前选区所在的dom
-  TextLabeling.prototype.getCurrentSelectionToDom = function(){
-      var sel = window.getSelection(),currentNode;
-      if(sel.type === 'None'){
-        currentNode = null;
-      }else{
-        currentNode = sel.getRangeAt(0).commonAncestorContainer.parentElement;
-      }
-      return currentNode;
+  TextLabeling.prototype.getCurrentSelectionContainer = function() {
+    var sel = window.getSelection(),
+      currentNode;
+    if (sel.type === "None") {
+      currentNode = null;
+    } else {
+      currentNode = sel.getRangeAt(0).commonAncestorContainer.parentElement;
+    }
+    return currentNode;
+  };
+  //获取选区包含的dom
+  TextLabeling.prototype.getRangeContainDom = function() {
+    debugger;
+    var sel = window.getSelection(),
+      currentNode;
+    if (sel.type === "None") {
+      currentNode = null;
+    } else {
+      currentNode = sel.getRangeAt(0).commonAncestorContainer.parentElement;
+    }
   };
   //排除style和script标签
   TextLabeling.prototype.filterNode = function(nodeList) {
@@ -600,20 +611,85 @@
   TextLabeling.prototype.isInContainer = function() {
     //检索前重置
     this.currentSelectionIsIn = false;
-    this.isChildOf(this.getCurrentSelectionToDom(), this.container);
+    this.isChildOf(this.getCurrentSelectionContainer(), this.container);
     return this.currentSelectionIsIn;
   };
   //绑定事件
   TextLabeling.prototype.bindEvent = function() {
     //selectionchange 只能挂载在 document上
-    var that= this;
-    document.addEventListener("selectionchange", function(e) {
+    var that = this;
+
+    // document.addEventListener("selectionchange", function(e) {
+    //   if (that.isInContainer()) {
+    //     console.log("in");
+    //   } else {
+    //     console.log("out");
+    //   }
+    // });
+
+    document.addEventListener("contextmenu", function(e) {
       if (that.isInContainer()) {
-        console.log('in')
+        console.log("in");
+        e.preventDefault();
       } else {
-        console.log('out')
+        console.log("out");
       }
     });
+
+    document.addEventListener("click", function(e) {
+      if (e.target.className.indexOf("tlm-btn") !== -1) {
+        that.addLabeling();
+      }
+    });
+  };
+  //添加标引
+  TextLabeling.prototype.addLabeling = function() {
+    var origin_text = window.getSelection().toString(),
+      wrap_span = document.createElement("span"),
+      wrap_range = window.getSelection().getRangeAt(0);
+    wrap_span.classList.add("tips-area");
+    wrap_span.innerHTML = `<span class="ta-text">${origin_text}</span><span class="ta-del-button  dds">x</span>`;
+    wrap_range.deleteContents();
+    wrap_range.insertNode(wrap_span);
+    wrap_range.collapse();
+    window.getSelection().removeAllRanges(); //保证range唯一，用于检测选区包含的dom
+  };
+  //删除标引
+  TextLabeling.prototype.removeLabeling = function() {
+    var origin_text = currentNode.previousElementSibling.innerText,
+      sel = window.getSelection(),
+      new_span = document.createTextNode(origin_text),
+      delete_area = currentNode.parentNode,
+      wrap_range = document.createRange();
+    sel.removeAllRanges();
+    wrap_range.selectNode(delete_area);
+    sel.addRange(wrap_range);
+    wrap_range.deleteContents();
+    wrap_range.insertNode(new_span);
+    wrap_range.collapse();
+  };
+  //右键功能
+  TextLabeling.prototype.setMenu = function() {
+    var tpl = "";
+    tpl += '<div class="text-labeling-menu">';
+    tpl += '     <div class="tlm-btn">添加标注</div>';
+    tpl += "</div>";
+    var menuBox = document.querySelector(".text-labeling-box");
+    if (menuBox) {
+      menuBox.innerHTML = tpl;
+    } else {
+      var menu_node = document.createElement("div");
+      menu_node.className = "text-labeling-box";
+      menu_node.innerHTML = tpl;
+      document.body.appendChild(menu_node);
+      this.menuBox = menu_node;
+    }
+  };
+  TextLabeling.prototype.displayMenu = function(e) {
+    var styleList = this.menuBox.style;
+    styleList.display = "block";
+    styleList.left = e.clientX + "px";
+    styleList.top = e.clientY + "px";
   };
   //初始化
   TextLabeling.prototype.init = function() {
