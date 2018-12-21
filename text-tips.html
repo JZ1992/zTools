@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>text-tips</title>
+    <script src="zTools.js"></script>
+    <script src="jquery.js"></script>
+  </head>
+  <body>
+    <button>+添加高亮</button>
+
+    <!-- tpl -->
+    <hr />
+    Template:
+    <span class="tips-area">
+      <span class="ta-text">标注内容</span>
+      <span class="ta-del-button ssdb">x</span>
+    </span>
+    <hr />
+
+    <script>
+      //check some dom
+      function checkRangeTip(checkDom) {
+        var isExisted = false,
+          sel = window.getSelection(),
+          range = sel.getRangeAt(0),
+          containerDom = range.commonAncestorContainer.children;
+        if (!containerDom || !containerDom.length) {
+          isExisted = false;
+        } else {
+          if (typeof checkDom === "string") {
+            let container_class = "";
+            for (let i = 0; i < containerDom.length; i++) {
+              container_class += containerDom[i].className;
+            }
+            isExisted =
+              container_class.indexOf("tips-area") === -1 ? false : true;
+          } else {
+            for (let i = 0; i < containerDom.length; i++) {
+              if (checkDom === containerDom[i]) {
+                isExisted = true;
+                break;
+              }
+            }
+          }
+        }
+        return isExisted;
+      }
+
+      function addTip() {
+        if (checkRangeTip("ta-del-button")) {
+          return;
+        }
+        var origin_text = window.getSelection().toString(),
+          wrap_span = document.createElement("span"),
+          wrap_range = window.getSelection().getRangeAt(0);
+        wrap_span.classList.add("tips-area");
+        wrap_span.innerHTML = `<span class="ta-text">${origin_text}</span><span class="ta-del-button  dds">x</span>`;
+        wrap_range.deleteContents();
+        wrap_range.insertNode(wrap_span);
+        wrap_range.collapse();
+        window.getSelection().removeAllRanges(); //保证range唯一，用于检测选区包含的dom
+      }
+      function removeTip(currentNode) {
+        var origin_text = currentNode.previousElementSibling.innerText,
+          sel = window.getSelection(),
+          new_span = document.createTextNode(origin_text),
+          delete_area = currentNode.parentNode,
+          wrap_range = document.createRange();
+        sel.removeAllRanges();
+        wrap_range.selectNode(delete_area);
+        sel.addRange(wrap_range);
+        wrap_range.deleteContents();
+        wrap_range.insertNode(new_span);
+        wrap_range.collapse();
+      }
+
+      //add tip
+      document.querySelector("button").addEventListener("click", function() {
+        //Existing skip
+        // if (checkRangeTip()) {
+        //   return;
+        // }
+        addTip();
+      });
+      //delete tip
+      window.addEventListener("click", function(e) {
+        if (e.target.className.indexOf("ta-del-button ") !== -1) {
+          removeTip(e.target);
+        }
+      });
+      // correct = document.createTextNode("输入正确");
+
+      //todo:邮件菜单
+      window.oncontextmenu = function(e) {
+        // e.preventDefault();
+        var menu = document.querySelector("#menu");
+        menu.style.left = e.clientX + "px";
+        menu.style.top = e.clientY + "px";
+        menu.style.width = "125px";
+      };
+      window.onclick = function(e) {
+        document.querySelector("#menu").style.height = 0;
+      };
+    </script>
+
+    <p>
+      001本实用新型涉及一种组合式汽车诊断设备，包括：上壳、与上壳相对设置的下壳、安装于该上、下壳之间诊断主机、及数台汽车功能诊断盒，所述上、下壳均包括数个相对设置的功能模块窗口，诊断主机及数台汽车功能诊断盒分别可拆装式对应嵌设于功能模块窗口内，诊断主机内设有系统软件及汽车诊断软件，每一汽车功能诊断盒上均设有数据接口，该汽车功能诊断盒均通过数据总线与诊断主机并行连接，并通过各自的数据接口与待诊断汽车上的诊断接口连接。本实用新型采用模块化设计，不仅体积小巧，且可并行接入多台具有故障诊断功能的汽车功能诊断盒，实现随用随插的使用特性，可以解决一体化汽车故障诊断设备的不足，为汽车维修技师提供多配置选择，满足不同用户对汽车各不同功能进行检测的需求。
+    </p>
+    <p>
+      002本发明公开了一种车辆识别方法，该方法包括：获取车辆终端的至少一个电子控制单元发送的报文信息；分析所述获取的报文信息，得到各个电子控制单元对应的报文特征信息；根据所述得到的报文特征信息确定车辆终端的车辆信息。本发明还公开了一种车辆识别装置。采用本发明，可方便准确的对车辆终端进行识别。
+    </p>
+    <p>
+      003一种与OBD诊断座进行数据交换的实现方法及其装置，该方法包括：步骤1、将原OBD？16型汽车诊断座上未定义的诊断信号脚定义为汽车各电控系统与外部汽车诊断设备进行数据通信的物理接口；步骤2、通过一诊断接口电路产生各种汽车电控系统所能识别的通信信号，再通过一信号通道切换电路，根据不同车型的诊断信号脚定义，将上述信号连接到经过步骤1操作后OBD？16型汽车诊断座上对应的诊断信号脚上；步骤3、通过MCU控制模块完成与汽车各电控系统的通信，对数据进行分析处理，并根据用户的操作选择，完成对应的功能诊断。本发明在原有支持OBD通信的设备上，基本不增加成本，通过简单的电路跳线配置，即可实现与具有统一OBD诊断座的汽车的不同电控系统进行数据交换。
+    </p>
+
+    <div class="top-text">
+      top
+      <div class="son1">
+        son1
+        <div class="son1-1">son1-1</div>
+      </div>
+    </div>
+
+    <script>
+      var textTipInstance = new zTools.TextLabeling({
+        container: ".top-text"
+      });
+      textTipInstance.init();
+    </script>
+
+    <div id="menu">
+      <div class="menu">功能1</div>
+      <div class="menu">功能2</div>
+      <div class="menu">功能3</div>
+      <div class="menu">功能4</div>
+      <div class="menu">功能5</div>
+    </div>
+
+    <style>
+      p {
+        line-height: 1.8;
+      }
+      .tips-area {
+        background: rgb(255, 204, 0);
+        padding: 5px 8px 5px 15px;
+        border-radius: 5px;
+      }
+      .tips-area .ta-del-button {
+        display: inline-block;
+        color: #fff;
+        background-color: rgba(10, 10, 10, 0.2);
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 19px;
+        font-size: 13px;
+        position: relative;
+        top: -2px;
+        margin-left: 10px;
+      }
+      .tips-area .ta-del-button:hover {
+        cursor: pointer;
+        background-color: rgba(10, 10, 10, 0.4);
+      }
+
+      #menu {
+        display: none;
+        overflow: hidden;
+        position: absolute;
+        border: 1px solid black;
+      }
+      .menu {
+        width: 130px;
+        height: 25px;
+        line-height: 25px;
+        padding: 0 10px;
+      }
+    </style>
+  </body>
+</html>
