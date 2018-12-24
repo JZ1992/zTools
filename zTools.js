@@ -770,6 +770,9 @@
     }
   };
   TextLabeling.prototype.hideMenu = function(e) {
+    if(!this.menuBox){
+      return;
+    }
     this.menuBox.style.display = "none";
   };
   TextLabeling.prototype.displayMenu = function(e) {

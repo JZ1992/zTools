@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>TextLabeling</title>
     <script src="zTools.js"></script>
-    <link rel="stylesheet" href="TextLabeling.css">
+    <link rel="stylesheet" href="TextLabeling.css" />
   </head>
   <body>
     <button>+添加高亮</button>
@@ -37,83 +37,28 @@
         <div class="son1-1">
           son1-1（）son1-1（）son1-1（）son1-1（）son1-1（）
           <small>small</small> <strong>strong</strong>
-          <a href="javascipt:void(0);">aaaa</a> son1-1（）son1-1（）son1-1（）
+          <a href="javascipt:void(0);">a
+            <strong style="color:red;">红色</strong>
+            a</a> son1-1（）son1-1（）son1-1（）
         </div>
       </div>
     </div>
+
+
+
 
     <script>
       var textTipInstance = new zTools.TextLabeling({
         container: ".top-text"
       });
       textTipInstance.init();
-    </script>
-
-
-    <script>
-      //check some dom
-      function checkRangeTip(checkDom) {
-        var isExisted = false,
-          sel = window.getSelection(),
-          range = sel.getRangeAt(0),
-          containerDom = range.commonAncestorContainer.children;
-        if (!containerDom || !containerDom.length) {
-          isExisted = false;
-        } else {
-          if (typeof checkDom === "string") {
-            var container_class = "";
-            for (var i = 0; i < containerDom.length; i++) {
-              container_class += containerDom[i].className;
-            }
-            isExisted =
-              container_class.indexOf("tips-area") === -1 ? false : true;
-          } else {
-            for (var i = 0; i < containerDom.length; i++) {
-              if (checkDom === containerDom[i]) {
-                isExisted = true;
-                break;
-              }
-            }
-          }
-        }
-        return isExisted;
-      }
-
-      function addTip() {
-        if (checkRangeTip("ta-del-button")) {
-          return;
-        }
-        var origin_text = window.getSelection().toString(),
-          wrap_span = document.createElement("span"),
-          wrap_range = window.getSelection().getRangeAt(0);
-        wrap_span.classList.add("tips-area");
-        wrap_span.innerHTML = '<span class="ta-text">'+ origin_text +'</span><span class="ta-del-button  dds">x</span>';
-        wrap_range.deleteContents();
-        wrap_range.insertNode(wrap_span);
-        wrap_range.collapse();
-        window.getSelection().removeAllRanges(); //保证range唯一，用于检测选区包含的dom
-      }
-      function removeTip(currentNode) {
-        var origin_text = currentNode.previousElementSibling.innerText,
-          sel = window.getSelection(),
-          new_span = document.createTextNode(origin_text),
-          delete_area = currentNode.parentNode,
-          wrap_range = document.createRange();
-        sel.removeAllRanges();
-        wrap_range.selectNode(delete_area);
-        sel.addRange(wrap_range);
-        wrap_range.deleteContents();
-        wrap_range.insertNode(new_span);
-        wrap_range.collapse();
-      }
-
       //add tip
       document.querySelector("button").addEventListener("click", function() {
         //Existing skip
         // if (checkRangeTip()) {
         //   return;
         // }
-        addTip();
+        textTipInstance.addLabeling();
       });
       //delete tip
       window.addEventListener("click", function(e) {
