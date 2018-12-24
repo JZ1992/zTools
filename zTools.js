@@ -560,9 +560,8 @@
     }
     return currentNode;
   };
-  //获取选区包含的dom
+  //获取选区所在区域的父元素（用于检索是不是 标引模式的容器内）
   TextLabeling.prototype.getRangeContainDom = function() {
-    debugger;
     var sel = window.getSelection(),
       currentNode;
     if (sel.type === "None") {
@@ -585,6 +584,9 @@
   };
   //节点的包含的关系[包含本身]
   TextLabeling.prototype.isChildOf = function(targetNode, fatherNode) {
+    if(!fatherNode){
+      return;
+    }
     if (targetNode === fatherNode) {
       this.currentSelectionIsIn = true;
     } else {
@@ -616,9 +618,7 @@
   };
   //绑定事件
   TextLabeling.prototype.bindEvent = function() {
-    //selectionchange 只能挂载在 document上
     var that = this;
-
     // document.addEventListener("selectionchange", function(e) {
     //   if (that.isInContainer()) {
     //     console.log("in");
@@ -627,10 +627,24 @@
     //   }
     // });
 
+    //阻止浏览器默认行为
+    function stopDefault(e) {
+      //防止浏览器默认行为
+      if (e && e.preventDefault) {
+        e.preventDefault();
+      }
+      //IE中组织浏览器行为
+      else {
+        window.event.returnValue = fale;
+        return false;
+      }
+    }
+
+    //右键菜单
     document.addEventListener("contextmenu", function(e) {
       if (that.isInContainer()) {
         console.log("in");
-        e.preventDefault();
+        stopDefault(e);
         that.setMenu();
         that.displayMenu(e);
       } else {
@@ -638,43 +652,110 @@
       }
     });
 
+    //右键菜单：添加标引
     document.addEventListener("click", function(e) {
-      if (e.target.className.indexOf("tlm-btn") !== -1) {
+      if (
+        e.target.className.indexOf("tlm-btn") !== -1 &&
+        that.isAllowAdditions()
+      ) {
         that.addLabeling();
+      }
+    });
+
+    //删除标引
+    document.addEventListener("click", function(e) {
+      var currentNode = e.target;
+      if (currentNode.className.indexOf("ta-del-button") !== -1) {
+        that.removeLabeling(currentNode);
+      }
+    });
+
+    //隐藏右键菜单
+    document.addEventListener("click", function(e) {
+      var menuBox = that.menuBox;
+      that.currentSelectionIsIn = false;
+      that.isChildOf(e.target, menuBox);
+      if (menuBox && !that.currentSelectionIsIn) {
+        that.hideMenu();
       }
     });
   };
   //添加标引
   TextLabeling.prototype.addLabeling = function() {
-    var origin_text = window.getSelection().toString(),
+    //复制选区内的html结构，文档片段
+    var cloneHtml = window
+        .getSelection()
+        .getRangeAt(0)
+        .extractContents(),
       wrap_span = document.createElement("span"),
       wrap_range = window.getSelection().getRangeAt(0);
     wrap_span.classList.add("tips-area");
-    wrap_span.innerHTML = `<span class="ta-text">${origin_text}</span><span class="ta-del-button  dds">x</span>`;
+    wrap_span.innerHTML =
+      '<span class="ta-text"></span><span class="ta-del-button  dds">x</span>';
+    wrap_span.querySelector(".ta-text").appendChild(cloneHtml);
     wrap_range.deleteContents();
     wrap_range.insertNode(wrap_span);
     wrap_range.collapse();
     window.getSelection().removeAllRanges(); //保证range唯一，用于检测选区包含的dom
+    this.hideMenu();
   };
   //删除标引
-  TextLabeling.prototype.removeLabeling = function() {
-    var origin_text = currentNode.previousElementSibling.innerText,
+  TextLabeling.prototype.removeLabeling = function(currentNode) {
+    var origin_box = currentNode.previousElementSibling,
+      origin_html,
       sel = window.getSelection(),
-      new_span = document.createTextNode(origin_text),
       delete_area = currentNode.parentNode,
       wrap_range = document.createRange();
-    sel.removeAllRanges();
-    wrap_range.selectNode(delete_area);
+
+    //选中原始文本的区域，利用range对象 进行html拆解
+    wrap_range.selectNodeContents(origin_box);
     sel.addRange(wrap_range);
+    origin_html = wrap_range.extractContents();
+
+    //删除标引区域
+    // sel.removeAllRanges();
+    wrap_range.selectNode(delete_area);
+    // sel.addRange(wrap_range);
     wrap_range.deleteContents();
-    wrap_range.insertNode(new_span);
+
+    //恢复原始文本html
+    wrap_range.insertNode(origin_html);
     wrap_range.collapse();
   };
+
+  //是否允许添加：包含标引的节点，则取消本次操作
+  TextLabeling.prototype.isAllowAdditions = function(checkDom) {
+    var isExisted = false,
+      sel = window.getSelection(),
+      range = sel.getRangeAt(0),
+      containerDom = range.cloneContents().children,
+      checkDom = checkDom || "ta-del-button";
+    if (!containerDom || !containerDom.length) {
+      isExisted = false;
+    } else {
+      if (typeof checkDom === "string") {
+        var container_class = "";
+        for (var i = 0; i < containerDom.length; i++) {
+          container_class += containerDom[i].className + " ";
+        }
+        isExisted = container_class.indexOf("tips-area") === -1 ? false : true;
+      } else {
+        for (var i = 0; i < containerDom.length; i++) {
+          if (checkDom === containerDom[i]) {
+            isExisted = true;
+            break;
+          }
+        }
+      }
+    }
+    return !isExisted;
+  };
+
   //右键功能
   TextLabeling.prototype.setMenu = function() {
     var tpl = "";
     tpl += '<div class="text-labeling-menu">';
-    tpl += '     <div class="tlm-btn">添加标注</div>';
+    tpl += '     <button class="tlm-btn">Add Labeling</button>';
     tpl += "</div>";
     var menuBox = document.querySelector(".text-labeling-box");
     if (menuBox) {
@@ -687,14 +768,40 @@
       this.menuBox = menu_node;
     }
   };
+  TextLabeling.prototype.hideMenu = function(e) {
+    this.menuBox.style.display = "none";
+  };
   TextLabeling.prototype.displayMenu = function(e) {
     var styleList = this.menuBox.style;
     styleList.display = "block";
-    styleList.left = e.clientX + 20 +"px";
-    styleList.top = e.clientY - 10 +"px";
+    styleList.left = e.clientX + 30 + "px";
+    styleList.top = e.clientY - 10 + "px";
+  };
+  //加载css
+  TextLabeling.prototype.loadCss = function(e) {
+    // var scripts = document.scripts,
+    //   styleSheets = document.styleSheets,
+    //   isCssLoaded = false,
+    //   baseUrl = "";
+    // Array.prototype.forEach.call(styleSheets, function(item) {
+    //   if (item.href && item.href.indexOf("TextLabeling.css")) {
+    //     isCssLoaded = true;
+    //   }
+    // });
+    // if (isCssLoaded) {
+    //   return;
+    // }
+    // Array.prototype.forEach.call(scripts, function(item) {
+    //   if (item.src && item.src.indexOf("TextLabeling.js")) {
+    //     debugger;
+    //     console.log("TextLabeling.js路径：" + item.src, item);
+    //   }
+    // });
+    // console.log("isCssLoaded:" + isCssLoaded);
   };
   //初始化
   TextLabeling.prototype.init = function() {
+    // this.loadCss();
     this.bindEvent();
   };
 })(window, document);
