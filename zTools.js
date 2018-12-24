@@ -631,6 +631,8 @@
       if (that.isInContainer()) {
         console.log("in");
         e.preventDefault();
+        that.setMenu();
+        that.displayMenu(e);
       } else {
         console.log("out");
       }
@@ -688,8 +690,8 @@
   TextLabeling.prototype.displayMenu = function(e) {
     var styleList = this.menuBox.style;
     styleList.display = "block";
-    styleList.left = e.clientX + "px";
-    styleList.top = e.clientY + "px";
+    styleList.left = e.clientX + 20 +"px";
+    styleList.top = e.clientY - 10 +"px";
   };
   //初始化
   TextLabeling.prototype.init = function() {
