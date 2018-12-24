@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <!-- <script src="zTools.js"></script> -->
+</head>
+
+<body>
+    <button class="design_btn">编辑/只读</button>
+    <hr>
+    <button class="add_labeling">添加标引</button>
+    <hr>
+
+    <div class="edit_area">
+        <p>打碎了富家大室离开军方大嫂倒萨发卡量对此</p>
+        <p>第三方雷克斯大家哦
+            <span class="father" style="color:red;">
+                <span class="fs-001">789</span>
+                <span class="son" style="font-weight:bold;font-size:18px;">粗粗粗粗</span>
+            </span>
+
+
+
+            发
+            <span>
+                <a href="www.baidu.com" target="_blank">##</a>
+            </span>
+            sdfsd
+        </p>
+    </div>
+
+
+    <script>
+        var toggle_btn = document.querySelector('.design_btn'),
+            add_btn = document.querySelector('.add_labeling'),
+            action_div = document.querySelector('.edit_area');
+
+        function createContainer() {
+            var _span = document.createElement('span');
+            _span.innerHTML = '<span class="display_area" style="border:1px solid blue;"> </span> <span class="delete_btn" style="color:Red;">X</span>';
+            console.log(_span)
+            return _span;
+        }
+
+
+        console.log(toggle_btn.attachEvent)
+        // console.log(toggle_btn.addEventListener)
+
+        toggle_btn.addEventListener('click', function () {
+            var mode = action_div.getAttribute('contenteditable') ? true : false;
+            action_div.setAttribute('contenteditable', !mode)
+        });
+
+
+        window.console = window.console || (function () {
+            var c = {};
+            c.log = c.warn = c.debug = c.info = c.error = c.time = c.dir = c.profile = c.clear = c.exception = c.trace = c.assert = function () { };
+            return c;
+        })();
+
+
+        add_btn.addEventListener('click', function () {
+
+            // var mode = action_div.getAttribute('contenteditable') ? true : false;
+            // if (!mode) {
+            //     return;
+            // }
+            // document.execCommand('Cut');
+            // var _container = createContainer();
+            // var sel = window.getSelection(),
+            //     range = document.createRange();
+            // // sel.removeAllRanges();
+            // range.selectNode(_container);
+            // sel.addRange(range);
+            // range.collapse();
+            // _container.querySelector('.display_area').focus();
+
+
+            var sel,
+                range,
+                cloneHtml,
+                newRange,
+                newContainer;
+
+            if (typeof window.getSelection === 'function') {
+                sel = window.getSelection();
+                range = sel.getRangeAt(0);
+                cloneHtml = range.extractContents();
+                newRange = document.createRange();
+                newContainer = createContainer();
+            } else {
+                sel = document.body.createTextRange().select();
+                range = document.selection.createRange();
+                cloneHtml = range.extractContents();
+                newRange = document.createRange();
+                newContainer = createContainer();
+            }
+
+
+            newContainer.style.border = '1px solid red';
+            newContainer.style.padding = '5px 15px';
+            newContainer.querySelector('.display_area').appendChild(cloneHtml);
+            range.insertNode(newContainer);
+            range.collapse();
+
+            console.log('ss')
+            console.log(sel);
+
+
+
+        });
+    </script>
+
+
+</body>
+
+</html>
