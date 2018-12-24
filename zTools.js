@@ -654,11 +654,12 @@
 
     //右键菜单：添加标引
     document.addEventListener("click", function(e) {
-      if (
-        e.target.className.indexOf("tlm-btn") !== -1 &&
-        that.isAllowAdditions()
-      ) {
-        that.addLabeling();
+      if( e.target.className.indexOf("tlm-add-btn") !== -1){
+          if(that.isAllowAdditions()){
+            that.addLabeling();
+          }else{
+            alert('当前区域已存在标引，请删除后添加！')
+          }
       }
     });
 
@@ -755,7 +756,7 @@
   TextLabeling.prototype.setMenu = function() {
     var tpl = "";
     tpl += '<div class="text-labeling-menu">';
-    tpl += '     <button class="tlm-btn">Add Labeling</button>';
+    tpl += '     <button class="tlm-add-btn">Add Labeling</button>';
     tpl += "</div>";
     var menuBox = document.querySelector(".text-labeling-box");
     if (menuBox) {
