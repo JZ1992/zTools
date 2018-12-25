@@ -541,12 +541,16 @@
     //缓存配置项
     this.config = config;
     //使用标引的容器
-    this.container = document.querySelector(config.container);
+    this.container =
+      config.container instanceof Node
+        ? config.container
+        : document.querySelector(config.container);
     //选区包含的dom，取消此次标引的操作
     this.exclude = config.exclude;
     //当前选区是否容器内
     this.currentSelectionIsIn = false;
     //鼠标右键功能区
+    this.useMenu = config.useMenu;
     this.menuBox = null;
   }
   //获取当前选区所在的dom
@@ -576,7 +580,7 @@
     for (var i = 0; i < nodeList.length; i++) {
       var node = nodeList[i];
       if (/script|style/.test(node.localName.toLowerCase())) {
-        break;
+        continue;
       }
       nodeArray.push(node);
     }
@@ -584,7 +588,7 @@
   };
   //节点的包含的关系[包含本身]
   TextLabeling.prototype.isChildOf = function(targetNode, fatherNode) {
-    if(!fatherNode){
+    if (!fatherNode) {
       return;
     }
     if (targetNode === fatherNode) {
@@ -644,9 +648,11 @@
     document.addEventListener("contextmenu", function(e) {
       if (that.isInContainer()) {
         console.log("in");
-        stopDefault(e);
-        that.setMenu();
-        that.displayMenu(e);
+        if (that.useMenu) {
+          stopDefault(e);
+          that.setMenu();
+          that.displayMenu(e);
+        }
       } else {
         console.log("out");
       }
@@ -654,19 +660,28 @@
 
     //右键菜单：添加标引
     document.addEventListener("click", function(e) {
-      if( e.target.className.indexOf("tlm-add-btn") !== -1){
-          if(that.isAllowAdditions()){
-            that.addLabeling();
-          }else{
-            alert('当前区域已存在标引，请删除后添加！')
-          }
+      if (
+        Array.prototype.join
+          .call(e.target.classList, " ")
+          .indexOf("tlm-add-btn") !== -1
+      ) {
+        if (that.isAllowAdditions()) {
+          that.addLabeling();
+          that.hideMenu();
+        } else {
+          alert("当前区域已存在标引，请删除后添加！");
+        }
       }
     });
 
     //删除标引
     document.addEventListener("click", function(e) {
       var currentNode = e.target;
-      if (currentNode.className.indexOf("ta-del-button") !== -1) {
+      if (
+        Array.prototype.join
+          .call(currentNode.classList, " ")
+          .indexOf("ta-del-button") !== -1
+      ) {
         that.removeLabeling(currentNode);
       }
     });
@@ -692,13 +707,12 @@
       wrap_range = window.getSelection().getRangeAt(0);
     wrap_span.classList.add("tips-area");
     wrap_span.innerHTML =
-      '<span class="ta-text"></span><span class="ta-del-button  dds">x</span>';
+      '<span class="ta-text"></span><span class="ta-del-button">x</span>';
     wrap_span.querySelector(".ta-text").appendChild(cloneHtml);
     wrap_range.deleteContents();
     wrap_range.insertNode(wrap_span);
     wrap_range.collapse();
-    window.getSelection().removeAllRanges(); //保证range唯一，用于检测选区包含的dom
-    this.hideMenu();
+    // window.getSelection().removeAllRanges(); //保证range唯一，用于检测选区包含的dom
   };
   //删除标引
   TextLabeling.prototype.removeLabeling = function(currentNode) {
@@ -709,6 +723,7 @@
       wrap_range = document.createRange();
 
     //选中原始文本的区域，利用range对象 进行html拆解
+    sel.removeAllRanges(wrap_range);
     wrap_range.selectNodeContents(origin_box);
     sel.addRange(wrap_range);
     origin_html = wrap_range.extractContents();
@@ -770,7 +785,7 @@
     }
   };
   TextLabeling.prototype.hideMenu = function(e) {
-    if(!this.menuBox){
+    if (!this.menuBox) {
       return;
     }
     this.menuBox.style.display = "none";
