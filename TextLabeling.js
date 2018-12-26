@@ -28,13 +28,16 @@ function TextLabeling(config) {
     this.menuBox = null;
     //回调
     this.callback = Object.create({
-        afterAdd: function(labelingStr) {},
-        afterRemove: function(labelingStr) {}
+        afterAdd: function(labelingStr) {
+            console.log(labelingStr);
+        },
+        afterRemove: function(labelingStr) {
+            console.log(labelingStr);
+        }
     });
     if (Object.prototype.toString.call(config.callback) === '[object Object]') {
         this.callback = config.callback;
     }
-
     TextLabeling.addInstanceToCache(this.container, this);
 }
 //TODO:检索字符，添加标引结构
@@ -92,7 +95,7 @@ TextLabeling.prototype.isChildOf = (function() {
                 return;
             }
             nodeChildren.forEach(function(itemNode) {
-                var childrenLenth = itemNode.children ? itemNode.children.length : 0;
+                // var childrenLenth = itemNode.children ? itemNode.children.length : 0;
                 checkIsInContainer(targetNode, itemNode);
             });
         }
@@ -132,7 +135,7 @@ TextLabeling.prototype.bindEvent = function() {
         if (e && e.preventDefault) {
             e.preventDefault();
         } else {
-            window.event.returnValue = fale;
+            window.event.returnValue = false;
             return false;
         }
     }
@@ -243,23 +246,23 @@ TextLabeling.prototype.removeLabeling = function(currentNode) {
 };
 
 //是否允许添加：包含标引的节点，则取消本次操作
-TextLabeling.prototype.isAllowAdditions = function(checkDom) {
+TextLabeling.prototype.isAllowAdditions = function(initCheckDom) {
     var isExisted = false,
         sel = window.getSelection(),
         range = sel.getRangeAt(0),
         containerDom = range.cloneContents().children,
-        checkDom = checkDom || 'ta-del-button';
+        checkDom = initCheckDom || 'ta-del-button';
     if (!containerDom || !containerDom.length) {
         isExisted = false;
     } else {
         if (typeof checkDom === 'string') {
             var container_class = '';
-            for (var i = 0; i < containerDom.length; i++) {
+            for (let i = 0; i < containerDom.length; i++) {
                 container_class += containerDom[i].className + ' ';
             }
             isExisted = container_class.indexOf('tips-area') === -1 ? false : true;
         } else {
-            for (var i = 0; i < containerDom.length; i++) {
+            for (let i = 0; i < containerDom.length; i++) {
                 if (checkDom === containerDom[i]) {
                     isExisted = true;
                     break;
@@ -287,7 +290,7 @@ TextLabeling.prototype.setMenu = function() {
         this.menuBox = menu_node;
     }
 };
-TextLabeling.prototype.hideMenu = function(e) {
+TextLabeling.prototype.hideMenu = function() {
     if (!this.menuBox) {
         return;
     }
@@ -303,7 +306,7 @@ TextLabeling.prototype.displayMenu = function(e) {
     styleList.top = e.clientY - 10 + 'px';
 };
 //加载css
-TextLabeling.prototype.loadCss = function(e) {
+TextLabeling.prototype.loadCss = function() {
     // var scripts = document.scripts,
     //   styleSheets = document.styleSheets,
     //   isCssLoaded = false,
@@ -382,14 +385,12 @@ TextLabeling.removeInstanceFromCache = function(node) {
 };
 //返回当前选区所在的实例
 TextLabeling.getInstanceWhereCurrentSelectionIsIn = function(node, scope) {
-    var currentNode, instance;
-    this.instanceCache.forEach(function(item, index) {
+    var instance;
+    this.instanceCache.forEach(function(item) {
         if (scope.isChildOf(node, item.node)) {
-            currentNode = item.node;
+            instance = item.instance;
         }
     });
-    var _index = this.getInstanceIndex(currentNode);
-    instance = _index !== -1 ? this.instanceCache[_index].instance : null;
     return instance;
 };
 export default TextLabeling;
