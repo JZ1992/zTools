@@ -3,11 +3,24 @@ import '@/lib/TextLabeling.css';
 /**
  * 文本标注
  */
+
+// @param {config}：Demo
+// {
+//   container: Node or selector string, 推荐Node 【必要参数】
+//   checkCharacters:Array,  初始检索字符，添加标引结构【非必要】
+//   exclude: Array， 选区需要排除的dom 【非必要】
+//   useMenu：Boolean, 是否启用鼠标右键菜单功能 【非必要】
+//   callback：Object, 设置添加和删除的回调函数 【非必要】
+// }
 function TextLabeling(config) {
     //缓存配置项
     this.config = config;
     //使用标引的容器
     this.container = config.container instanceof Node ? config.container : document.querySelector(config.container);
+    //当前标引区域的字符串
+    this.currentLabelingStr = '';
+    //初始检索字符：添加标引结构
+    this.checkCharacters = config.checkCharacters;
     //选区包含的dom，取消此次标引的操作
     this.exclude = config.exclude;
     //鼠标右键功能区
@@ -15,8 +28,8 @@ function TextLabeling(config) {
     this.menuBox = null;
     //回调
     this.callback = Object.create({
-        afterAdd: function() {},
-        afterRemove: function() {}
+        afterAdd: function(labelingStr) {},
+        afterRemove: function(labelingStr) {}
     });
     if (Object.prototype.toString.call(config.callback) === '[object Object]') {
         this.callback = config.callback;
@@ -24,6 +37,10 @@ function TextLabeling(config) {
 
     TextLabeling.addInstanceToCache(this.container, this);
 }
+//TODO:检索字符，添加标引结构
+TextLabeling.prototype.addLabelingDomStructure = function() {
+    //
+};
 //获取当前选区所在的dom
 TextLabeling.prototype.getCurrentSelectionContainer = function() {
     var sel = window.getSelection(),
@@ -165,32 +182,37 @@ TextLabeling.prototype.rangeIsLegal = function() {
 };
 //添加标引
 //接口暴露， 获取选区所在的实例， 调用标引方法
-TextLabeling.prototype.addApi = function() {
+TextLabeling.prototype.addApi = function(labelingStyle) {
     if (!this.rangeIsLegal()) {
         return;
     }
     var currentNode = this.getCurrentSelectionContainer(),
         instance = TextLabeling.getInstanceWhereCurrentSelectionIsIn(currentNode, this);
     if (instance) {
-        this.addLabeling.call(instance);
+        this.addLabeling.call(instance, labelingStyle);
     }
 };
-TextLabeling.prototype.addLabeling = function() {
+TextLabeling.prototype.addLabeling = function(labelingStyle) {
     //复制选区内的html结构，文档片段
-    var cloneHtml = window
-            .getSelection()
-            .getRangeAt(0)
-            .extractContents(),
-        wrap_span = document.createElement('span'),
-        wrap_range = window.getSelection().getRangeAt(0);
+    var sel = window.getSelection();
+    this.currentLabelingStr = sel.toString(); //dom移除前获取字符
+    var wrap_range = window.getSelection().getRangeAt(0),
+        cloneHtml = wrap_range.extractContents(),
+        wrap_span = document.createElement('span');
+
     wrap_span.classList.add('tips-area');
+    if (labelingStyle && typeof labelingStyle === 'object') {
+        for (var cssKey in labelingStyle) {
+            wrap_span.style[cssKey] = labelingStyle[cssKey];
+        }
+    }
     wrap_span.innerHTML = '<span class="ta-text"></span><span class="ta-del-button">x</span>';
     wrap_span.querySelector('.ta-text').appendChild(cloneHtml);
     wrap_range.deleteContents();
     wrap_range.insertNode(wrap_span);
     wrap_range.collapse();
     // window.getSelection().removeAllRanges(); //保证range唯一，用于检测选区包含的dom
-    this && this.callback.afterAdd();
+    this && this.callback.afterAdd(this.currentLabelingStr);
 };
 //删除标引
 TextLabeling.prototype.removeLabeling = function(currentNode) {
@@ -204,6 +226,7 @@ TextLabeling.prototype.removeLabeling = function(currentNode) {
     sel.removeAllRanges(wrap_range);
     wrap_range.selectNodeContents(origin_box);
     sel.addRange(wrap_range);
+    this.currentLabelingStr = sel.toString();
     origin_html = wrap_range.extractContents();
 
     //删除标引区域
@@ -216,7 +239,7 @@ TextLabeling.prototype.removeLabeling = function(currentNode) {
     wrap_range.insertNode(origin_html);
     wrap_range.collapse();
 
-    this && this.callback.afterRemove();
+    this && this.callback.afterRemove(this.currentLabelingStr);
 };
 
 //是否允许添加：包含标引的节点，则取消本次操作
