@@ -32,6 +32,8 @@
 
     //文本标注
     this.TextLabeling = TextLabeling;
+
+    
   }
 
   /**
